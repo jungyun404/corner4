@@ -1,4 +1,11 @@
 const { User, Post, Hashtag } = require('../models');
+const rateLimit = require('express-rate-limit');
+
+// Apply rate limiting to expensive operations
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100, // limit each IP to 100 requests per windowMs
+});
 
 exports.renderProfile = (req, res) => {
     res.render('profile', { title: '나의 서랍' });
@@ -16,7 +23,7 @@ exports.renderProfile = (req, res) => {
     });
 };
 
-exports.renderHashtag = async (req, res, next) => {
+exports.renderHashtag = [limiter, async (req, res, next) => {
     const query = req.query.hashtag;
     if (!query) {
       return res.redirect('/');
@@ -36,4 +43,4 @@ exports.renderHashtag = async (req, res, next) => {
       console.error(error);
       return next(error);
     }
-  };
+  }];

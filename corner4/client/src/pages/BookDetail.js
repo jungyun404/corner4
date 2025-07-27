@@ -70,7 +70,7 @@ const BookDetail = () => {
 
       {/* 도서 상세 정보 */}
       <div className="book-detail-container">
-        <img src={book.cover} alt={book.title} className="book-cover" />
+        <img src={book.cover && book.cover.startsWith('http') ? book.cover : ''} alt={book.title} className="book-cover" />
         <div className="book-info">
           <h2>{book.title}</h2>
           <p><strong>저자:</strong> {book.author}</p>

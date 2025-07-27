@@ -1,4 +1,5 @@
 const express = require('express');
+const rateLimit = require('express-rate-limit'); // Import the rate limiting middleware
 
 const { isLoggedIn } = require('../middlewares');
 const { follow } = require('../controllers/user');
@@ -6,7 +7,14 @@ const { User } = require('../models');
 
 const router = express.Router();
 
-router.post('/:id/follow', isLoggedIn, async (req, res, next) => {
+// Define rate limiting rules
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100, // limit each IP to 100 requests per windowMs
+  message: 'Too many requests, please try again later.'
+});
+
+router.post('/:id/follow', isLoggedIn, limiter, async (req, res, next) => { // Apply rate limiter
   try {
     console.log("✅ 팔로우 요청 받음:", req.params.id); // 요청 ID 확인
     console.log("✅ 현재 로그인한 사용자:", req.user); // 로그인 상태 확인
@@ -36,7 +44,7 @@ router.post('/:id/follow', isLoggedIn, async (req, res, next) => {
 
 
 // 팔로우 취소 처리
-router.post('/:id/unfollow', isLoggedIn, async (req, res, next) => {
+router.post('/:id/unfollow', isLoggedIn, limiter, async (req, res, next) => { // Apply rate limiter
   try {
     const { id } = req.params;
     const me = await User.findByPk(req.user.id);
@@ -60,7 +68,7 @@ router.post('/:id/unfollow', isLoggedIn, async (req, res, next) => {
 });
 
 // 모든 사용자 목록 조회 (로그인한 경우에만 접근 가능)
-router.get('/list', isLoggedIn, async (req, res, next) => {
+router.get('/list', isLoggedIn, limiter, async (req, res, next) => { // Apply rate limiter
   try {
     const users = await User.findAll();
     res.render('layout', {
@@ -77,7 +85,7 @@ router.get('/list', isLoggedIn, async (req, res, next) => {
 
 
 // 사용자 목록 조회 API 수정
-router.get('/users', isLoggedIn, async (req, res) => {
+router.get('/users', isLoggedIn, limiter, async (req, res) => { // Apply rate limiter
   try {
     const users = await User.findAll();
     const followingIds = req.user.Followings.map(f => f.id); // 로그인한 사용자의 팔로잉 ID 목록
@@ -100,7 +108,7 @@ router.get('/users', isLoggedIn, async (req, res) => {
 //닉네임 변경 api
 //수정수정
 
-router.post('/update-nickname', isLoggedIn, async (req, res) => {
+router.post('/update-nickname', isLoggedIn, limiter, async (req, res) => { // Apply rate limiter
   try {
       const { nickname } = req.body;
       const userId = req.user.id;  // 로그인된 사용자 ID 사용
@@ -159,7 +167,7 @@ router.post('/update-nickname', isLoggedIn, async (req, res) => {
 
 
 
-router.get('/user_profile/:username', async (req, res, next) => {
+router.get('/user_profile/:username', limiter, async (req, res, next) => { // Apply rate limiter
   try {
     console.log("🔹 현재 로그인한 사용자:", req.user); // 로그 추가
     console.log("🔹 요청된 사용자 프로필:", req.params.username);

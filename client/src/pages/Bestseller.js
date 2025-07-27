@@ -118,12 +118,12 @@ const Bestseller = () => {
                   src={book.cover} 
                   alt={book.title} 
                   className="book-cover" 
-                  onClick={() => navigate(`/book/${encodeURIComponent(book.title)}`)}
+                  onClick={() => navigate(`/book/${encodeURIComponent(book.title.replace(/[^a-zA-Z0-9 ]/g, ""))}`)}
                   style={{ cursor: "pointer" }}
                 />
                 <p 
                   className="book-title"
-                  onClick={() => navigate(`/book/${encodeURIComponent(book.title)}`)}
+                  onClick={() => navigate(`/book/${encodeURIComponent(book.title.replace(/[^a-zA-Z0-9 ]/g, ""))}`)}
                   style={{ cursor: "pointer", fontSize: "15px" }}
                 >
                   {book.title.split("-")[0].trim()}

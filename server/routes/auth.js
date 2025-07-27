@@ -1,5 +1,6 @@
 const express = require('express');
 const passport = require('passport');
+const rateLimit = require('express-rate-limit'); // Add rate limiting
 
 const { isLoggedIn, isNotLoggedIn } = require('../middlewares');
 const { join, login, logout } = require('../controllers/auth');
@@ -7,6 +8,19 @@ const { join, login, logout } = require('../controllers/auth');
 const User = require('../models/user'); // 모델 경로에 맞게 수정
 
 const router = express.Router();
+
+// Rate limiter for login and delete operations
+const loginLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 5, // Limit each IP to 5 requests per windowMs
+  message: "Too many login attempts from this IP, please try again after 15 minutes"
+});
+
+const deleteLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 5, // Limit each IP to 5 requests per windowMs
+  message: "Too many delete requests from this IP, please try again after 15 minutes"
+});
 
 // POST /auth/join - 회원가입 처리
 // router.post('/join', isNotLoggedIn, join);
@@ -25,7 +39,7 @@ router.get('/login', isNotLoggedIn, (req, res) => {
 });
 
 
-router.post('/login', isNotLoggedIn, passport.authenticate('local', {
+router.post('/login', isNotLoggedIn, loginLimiter, passport.authenticate('local', {
   failureRedirect: '/auth/login',  // 로그인 실패 시 다시 로그인 페이지로 리다이렉트
   failureFlash: true,
 }), (req, res) => {
@@ -76,7 +90,7 @@ router.get('/logout', isLoggedIn, logout);
 //   }
 // });
 
-router.post("/delete", isLoggedIn, async (req, res, next) => {
+router.post("/delete", isLoggedIn, deleteLimiter, async (req, res, next) => {
   try {
     await User.destroy({
       where: { id: req.user.id }

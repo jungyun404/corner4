@@ -2,6 +2,16 @@ const express = require("express");
 const router = express.Router();
 const { Post, User, Like } = require("../models"); // ✅ Like 모델 추가
 const { Op } = require("sequelize");
+const rateLimit = require("express-rate-limit"); // Import rate limiting middleware
+
+// Apply rate limiting to all routes
+const limiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 100, // Limit each IP to 100 requests per windowMs
+    message: "Too many requests from this IP, please try again later."
+});
+
+router.use(limiter); // Apply the rate limiter to all routes
 
 // 📌 [1] 게시글 목록 조회 + 검색 기능 (GET /posts)
 router.get("/", async (req, res) => {
@@ -9,7 +19,8 @@ router.get("/", async (req, res) => {
         const { search } = req.query;
         let whereCondition = {};
 
-        if (search) {
+        // Ensure search is a string
+        if (search && typeof search === 'string') {
             whereCondition = {
                 [Op.or]: [
                     { bookTitle: { [Op.like]: `%${search}%` } },  // 책 제목 검색
